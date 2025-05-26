@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Cloudinary Upload</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .preview {
+        max-width: 100%;
+        margin-top: 20px;
+      }
+      #result {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test Cloudinary Upload</h1>
+    <div class="form-group">
+      <input type="file" id="imageInput" accept="image/*" />
+    </div>
+    <div class="form-group">
+      <button onclick="uploadImage()">Upload Image</button>
+    </div>
+    <div id="preview" class="preview"></div>
+    <div id="result"></div>
+
+    <script>
+      // Preview image before upload
+      document
+        .getElementById("imageInput")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const preview = document.getElementById("preview");
+              preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%;">`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      // Upload image
+      async function uploadImage() {
+        const fileInput = document.getElementById("imageInput");
+        const file = fileInput.files[0];
+        const resultDiv = document.getElementById("result");
+
+        if (!file) {
+          resultDiv.textContent = "Please select an image file";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          resultDiv.textContent = "Uploading...";
+          const response = await fetch(
+            "http://localhost:5000/api/test/upload",
+            {
+              method: "POST",
+              body: formData,
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response
+              .json()
+              .catch(() => ({ message: "Unknown error" }));
+            throw new Error(
+              errorData.error ||
+                errorData.message ||
+                `Server responded with ${response.status}`
+            );
+          }
+
+          const data = await response.json();
+          resultDiv.textContent = JSON.stringify(data, null, 2);
+
+          if (data.file && data.file.url) {
+            const preview = document.getElementById("preview");
+            preview.innerHTML = `
+                        <h3>Uploaded Image:</h3>
+                        <img src="${data.file.url}" style="max-width: 100%;">
+                    `;
+          }
+        } catch (error) {
+          resultDiv.textContent = "Error: " + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>
