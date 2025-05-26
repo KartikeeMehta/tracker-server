@@ -53,7 +53,7 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: ["https://blaze-tracker.digiwbs.com", "http://localhost:5173"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
@@ -108,68 +108,19 @@ app.use("/api/tabs", tabRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
-  try {
-    const dbStatus =
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-    const dbState =
-      {
-        0: "disconnected",
-        1: "connected",
-        2: "connecting",
-        3: "disconnecting",
-      }[mongoose.connection.readyState] || "unknown";
-
-    res.json({
-      status: "ok",
-      timestamp: new Date(),
-      database: {
-        status: dbStatus,
-        state: dbState,
-        readyState: mongoose.connection.readyState,
-      },
-      connectionString: process.env.MONGODB_URI
-        ? "Using environment variable"
-        : "Using default Atlas connection",
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Health check failed",
-      error: error.message,
-    });
-  }
+  res.json({
+    status: "ok",
+    timestamp: new Date(),
+    environment: process.env.NODE_ENV,
+  });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Error details:", {
-    name: err.name,
-    message: err.message,
-    code: err.code,
-    stack: err.stack,
-  });
-
-  // Handle specific error types
-  if (err instanceof mongoose.Error) {
-    return res.status(500).json({
-      message: "Database error",
-      error: err.message,
-      code: err.code,
-    });
-  }
-
-  if (err.name === "ValidationError") {
-    return res.status(400).json({
-      message: "Validation error",
-      error: err.message,
-    });
-  }
-
-  // Generic error response
+  console.error("Error:", err);
   res.status(500).json({
     message: "Something went wrong!",
     error: err.message,
-    type: err.name,
   });
 });
 
@@ -178,7 +129,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
-    const PORT = process.env.PORT || 5000; // Changed from 3000 to 5000
+    const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
