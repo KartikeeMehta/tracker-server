@@ -23,7 +23,7 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid token format" });
     }
 
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).populate("companyId");
     if (!user) {
       console.log("User not found for token");
       return res.status(401).json({ message: "User not found" });

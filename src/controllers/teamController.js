@@ -145,7 +145,7 @@ exports.addTeamMember = async (req, res) => {
       role,
       phone,
       location,
-      company: req.user.company,
+      company: req.user.companyId,
     });
 
     // Check if user already exists
@@ -167,7 +167,7 @@ exports.addTeamMember = async (req, res) => {
       role,
       phone,
       location,
-      companyId: req.user.companyId,
+      companyId: req.user.companyId._id,
       employeeId,
       isVerified: true, // Since this is an admin action
     });
@@ -181,10 +181,7 @@ exports.addTeamMember = async (req, res) => {
     const loginUrl = process.env.CLIENT_URL
       ? `${process.env.CLIENT_URL}/login`
       : "http://localhost:5173/login";
-    const companyName =
-      req.user.companyName ||
-      (req.user.companyId && req.user.companyId.name) ||
-      "Your Company";
+    const companyName = req.user.companyId.name || "Your Company";
     await sendNewMemberCredentials(
       user.email,
       user.firstName,
