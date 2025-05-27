@@ -12,6 +12,7 @@ console.log("SMTP Config Check:", {
 
 // Create transporter with debug enabled
 const transporter = nodemailer.createTransport({
+  service: "gmail", // Use Gmail service
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
   secure: process.env.SMTP_SECURE === "true",
@@ -19,8 +20,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  debug: true, // Enable debug output
-  logger: true, // Enable logger
+  tls: {
+    rejectUnauthorized: false, // Only use this in development
+  },
 });
 
 // Verify SMTP connection
@@ -108,7 +110,7 @@ const sendNewMemberCredentials = async (
       companyName,
     });
 
-    const info = await transporter.sendMail({
+    const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
       subject: `Welcome to ${companyName}! Your account has been created`,
@@ -124,7 +126,9 @@ const sendNewMemberCredentials = async (
         <p>Please <a href="${loginUrl}">log in here</a> and change your password after logging in.</p>
         <p>Best regards,<br/>${companyName} Team</p>
       `,
-    });
+    };
+
+    const info = await transporter.sendMail(mailOptions);
 
     console.log("New member credentials email sent:", {
       messageId: info.messageId,
