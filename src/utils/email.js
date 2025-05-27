@@ -1,27 +1,38 @@
 const nodemailer = require("nodemailer");
 
+// Validate required environment variables
+const requiredEnvVars = [
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "SMTP_FROM",
+  "CLIENT_URL",
+];
+
+const missingEnvVars = requiredEnvVars.filter(
+  (varName) => !process.env[varName]
+);
+if (missingEnvVars.length > 0) {
+  console.error("Missing required environment variables:", missingEnvVars);
+}
+
 // Log SMTP configuration (without sensitive data)
 console.log("SMTP Config Check:", {
-  host: process.env.SMTP_HOST ? "Set" : "Not Set",
-  port: process.env.SMTP_PORT ? "Set" : "Not Set",
-  secure: process.env.SMTP_SECURE ? "Set" : "Not Set",
-  user: process.env.SMTP_USER ? "Set" : "Not Set",
-  from: process.env.SMTP_FROM ? "Set" : "Not Set",
-  clientUrl: process.env.CLIENT_URL ? "Set" : "Not Set",
+  host: process.env.SMTP_HOST || "Not Set",
+  port: process.env.SMTP_PORT || "Not Set",
+  secure: process.env.SMTP_SECURE || "Not Set",
+  user: process.env.SMTP_USER || "Not Set",
+  from: process.env.SMTP_FROM || "Not Set",
+  clientUrl: process.env.CLIENT_URL || "Not Set",
 });
 
 // Create transporter with debug enabled
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Use Gmail service
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: process.env.SMTP_SECURE === "true",
+  service: "gmail",
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false, // Only use this in development
   },
 });
 
@@ -101,6 +112,10 @@ const sendNewMemberCredentials = async (
   companyName
 ) => {
   try {
+    if (!process.env.SMTP_FROM) {
+      throw new Error("SMTP_FROM environment variable is not set");
+    }
+
     console.log("Sending new member credentials to:", email);
     console.log("Email configuration:", {
       from: process.env.SMTP_FROM,

@@ -195,10 +195,13 @@ router.get("/:projectId/tasks", auth, async (req, res) => {
 
 router.post("/:projectId/tasks", auth, async (req, res) => {
   try {
+    const { assignedMembers, ...rest } = req.body; // Extract assignedMembers
+
     const task = new Task({
-      ...req.body,
+      ...rest, // Include other task data from req.body
       projectId: req.params.projectId,
       createdBy: req.user._id,
+      assignedTo: assignedMembers, // Use assignedMembers for assignedTo field
     });
     await task.save();
     res.status(201).json(task);
