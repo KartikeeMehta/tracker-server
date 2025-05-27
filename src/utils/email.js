@@ -10,6 +10,7 @@ console.log("SMTP Config Check:", {
   clientUrl: process.env.CLIENT_URL ? "Set" : "Not Set",
 });
 
+// Create transporter with debug enabled
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
@@ -18,12 +19,20 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  debug: true, // Enable debug output
+  logger: true, // Enable logger
 });
 
 // Verify SMTP connection
 transporter.verify(function (error, success) {
   if (error) {
-    console.error("SMTP Connection Error:", error);
+    console.error("SMTP Connection Error:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response,
+    });
   } else {
     console.log("SMTP Server is ready to take our messages");
   }
@@ -91,6 +100,13 @@ const sendNewMemberCredentials = async (
 ) => {
   try {
     console.log("Sending new member credentials to:", email);
+    console.log("Email configuration:", {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: `Welcome to ${companyName}! Your account has been created`,
+      loginUrl,
+      companyName,
+    });
 
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM,
@@ -110,10 +126,22 @@ const sendNewMemberCredentials = async (
       `,
     });
 
-    console.log("New member credentials email sent:", info.messageId);
+    console.log("New member credentials email sent:", {
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected,
+    });
     return info;
   } catch (error) {
-    console.error("Error sending new member credentials:", error);
+    console.error("Error sending new member credentials:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response,
+      stack: error.stack,
+    });
     throw error;
   }
 };

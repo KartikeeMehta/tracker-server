@@ -178,17 +178,33 @@ exports.addTeamMember = async (req, res) => {
     console.log("User saved successfully");
 
     // Send credentials email to the new member
-    const loginUrl = process.env.CLIENT_URL
-      ? `${process.env.CLIENT_URL}/login`
-      : "http://localhost:5173/login";
-    const companyName = req.user.companyId.name || "Your Company";
-    await sendNewMemberCredentials(
-      user.email,
-      user.firstName,
-      tempPassword,
-      loginUrl,
-      companyName
-    );
+    try {
+      const loginUrl = process.env.CLIENT_URL
+        ? `${process.env.CLIENT_URL}/login`
+        : "http://localhost:5173/login";
+      const companyName = req.user.companyId.name || "Your Company";
+
+      console.log("Attempting to send email with config:", {
+        to: user.email,
+        from: process.env.SMTP_FROM,
+        loginUrl,
+        companyName,
+      });
+
+      await sendNewMemberCredentials(
+        user.email,
+        user.firstName,
+        tempPassword,
+        loginUrl,
+        companyName
+      );
+
+      console.log("Email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+      // Don't throw the error, just log it and continue
+      // The user is already created in the database
+    }
 
     res.status(201).json({
       message: "Team member added successfully",
@@ -205,16 +221,10 @@ exports.addTeamMember = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in addTeamMember:", {
-      error: error.message,
-      stack: error.stack,
-      user: req.user,
-      body: req.body,
-    });
+    console.error("Error in addTeamMember:", error);
     res.status(500).json({
-      message: "Error adding team member",
+      message: "Failed to add team member",
       error: error.message,
-      details: error.stack,
     });
   }
 };
