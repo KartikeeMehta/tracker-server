@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
 // Initialize models
@@ -50,13 +52,39 @@ const timelineRoutes = require("./routes/timelineRoutes");
 const tabRoutes = require("./routes/tabRoutes");
 
 const app = express();
+const server = http.createServer(app);
+
+// Configure Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL, // Allow connections from your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"], // Add other necessary methods
+  },
+});
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  // Identify user on connection (e.g., via a query parameter or handshake)
+  const userId = socket.handshake.query.userId;
+  if (userId) {
+    console.log(`User ${userId} connected with socket ID ${socket.id}`);
+    // You might want to store this mapping (userId to socket.id) if you need to send notifications to specific users
+  }
+
+  // Handle disconnection
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+
+  // You can add more specific event listeners here if needed
+});
 
 // CORS configuration
 const corsOptions = {
-  origin: ["https://blaze-tracker.digiwbs.com", "http://localhost:5173"],
+  origin: process.env.CLIENT_URL,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
 };
 
 app.use(cors(corsOptions));
@@ -96,13 +124,13 @@ const connectWithRetry = async () => {
 // Start MongoDB connection
 connectWithRetry();
 
-// Routes
+// Routes - Pass the io instance to routes that need it
 app.use("/api/users", userRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/projects", projectRoutes);
+app.use("/api/teams", teamRoutes(io)); // Pass io to team routes
+app.use("/api/projects", projectRoutes(io)); // Pass io to project routes
 app.use("/api/timeline", timelineRoutes);
 app.use("/api/tabs", tabRoutes);
 
@@ -124,18 +152,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    const PORT = process.env.PORT || 5000;
+// Connect to MongoDB and start server (remove duplicate connection)
+// mongoose.connect(process.env.MONGODB_URI)
+//   .then(() => {
+//     console.log("Connected to MongoDB");
+const PORT = process.env.PORT || 5000;
 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Health check available at: http://localhost:${PORT}/health`);
-    });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-  });
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Health check available at: http://localhost:${PORT}/health`);
+});
+//   })
+//   .catch((err) => {
+//     console.error("MongoDB connection error:", err);
+//   });
