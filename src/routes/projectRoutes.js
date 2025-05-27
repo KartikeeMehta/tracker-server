@@ -128,6 +128,10 @@ router.get("/:id", auth, async (req, res) => {
       { path: "projectLead", select: "firstName lastName email" },
       { path: "members", select: "firstName lastName email" },
       { path: "teamId", select: "name" },
+      {
+        path: "tasks",
+        populate: { path: "assignedTo", select: "firstName lastName email" },
+      },
     ]);
 
     if (!project) {
