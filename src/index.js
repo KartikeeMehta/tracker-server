@@ -83,7 +83,11 @@ io.on("connection", (socket) => {
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CLIENT_URL,
+  origin: [
+    "http://localhost:5173",
+    "https://blaze-tracker.digiwbs.com",
+    process.env.CLIENT_URL,
+  ],
   credentials: true,
 };
 
