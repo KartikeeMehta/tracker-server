@@ -129,8 +129,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/teams", teamRoutes(io)); // Pass io to team routes
-app.use("/api/projects", projectRoutes(io)); // Pass io to project routes
+app.use("/api/teams", teamRoutes(io));
+app.use("/api/projects", projectRoutes(io));
 app.use("/api/timeline", timelineRoutes);
 app.use("/api/tabs", tabRoutes);
 
