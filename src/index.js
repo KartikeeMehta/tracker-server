@@ -75,7 +75,8 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId) {
     console.log(`User ${userId} connected with socket ID ${socket.id}`);
-    // You might want to store this mapping (userId to socket.id) if you need to send notifications to specific users
+    // Join the user to a room with their userId
+    socket.join(userId.toString());
   }
 
   // Handle disconnection
