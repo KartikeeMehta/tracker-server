@@ -57,8 +57,13 @@ const server = http.createServer(app);
 // Configure Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL, // Allow connections from your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE"], // Add other necessary methods
+    origin: [
+      "https://blaze-tracker.digiwbs.com",
+      "http://localhost:5173",
+      process.env.CLIENT_URL,
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   },
 });
 
